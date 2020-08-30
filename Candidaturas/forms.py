@@ -132,7 +132,7 @@ class CandidatesForm(forms.ModelForm):
     )
 
     HABILITACOES_ACADEMICAS =(
-        ("Licenciatura Concluída","Licenciatura Concluída"),
+        ("Licenciatura Concluída","Licenciatura concluída"),
         ("Frequência Universitária","Frequência Universitária"),
         ("Ensino M. Concluído","Ensino M. Concluído"),
     )

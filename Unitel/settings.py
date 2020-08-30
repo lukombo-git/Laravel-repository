@@ -138,6 +138,7 @@ EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 #add email settings
 EMAIL_HOST ='smtp.gmail.com'
+
 EMAIL_HOST_USER ='vatadiame.developer@gmail.com'
 EMAIL_HOST_PASSWORD ='egrrsbmaiefibjqk'
 EMAIL_PORT = 587

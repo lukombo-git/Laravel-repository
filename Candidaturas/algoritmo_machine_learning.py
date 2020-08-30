@@ -37,26 +37,18 @@ def ReturnCandidatesList():
     X = df_candidates_list.drop(['nome_completo'],axis=1)
     Y = df_candidates_list["id_candidato"]
     #aplicando o treino e teste
-    x_train,x_test,y_train,y_test = train_test_split(X,Y,train_size=0.8,test_size=0.2,random_state=101)
+    x_train,x_test,y_train,y_test = train_test_split(X,Y,train_size=0.6,test_size=0.4,random_state=101)
     #imprimindo o resultado
     resultado = ClassifierFunction(x_train,x_test,y_train,y_test,KNeighborsModel)
-
     #df final com os candidatos previstos
-    return resultado
+    return resultado["id_candidato"]
 
 #função de previsão
 def ReturnPrevisao():
-
     #dataframe dos candidatos
     df_candidatos = DF_Variaveis()
-    df_candidatos.columns=['id_candidato','nome_completo','provincia_residencia','habilitacoes_academica','grau',
-                            'instituicao','curso','ano_conclusao','media_final','area_candidatura',
-                            'ano_experiencia_area','empresas_onde_trabalhou','cargo_na_empresa','disponibilidade','nivel_ingles','curriculum']
     #dataframe da previsão
     df_previsao = ReturnCandidatesList()
-    df_previsao.drop(['provincia_residencia','habilitacoes_academica','grau',
-                      'instituicao','curso','ano_conclusao','media_final','area_candidatura',
-                      'ano_experiencia_area','empresas_onde_trabalhou','cargo_na_empresa','disponibilidade','nivel_ingles','curriculum'],axis=1,inplace=True)
     #merge columns
     df_final=pd.merge(df_candidatos,df_previsao,on='id_candidato')
     return df_final

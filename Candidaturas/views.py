@@ -4,17 +4,17 @@ from django.contrib.auth.forms import UserCreationForm,UserChangeForm
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render,redirect
 from django.contrib.auth.models import User
-from .models import Candidates, Vagas, DownloadFile
+from .models import *
 from django.core.files.storage import default_storage
 from django.contrib import messages
 from django.http import HttpResponse
 from django.contrib import messages
 from django.db.models import Q
 
-#Manine learning imports
-import pandas as pd
 #importando a classificação
 from .final_classification import *
+
+from .utils_cand import*
 
 
 #User register view
@@ -29,7 +29,9 @@ def UserRegister(request):
             instance.save()
             update_session_auth_hash(request, username)
             messages.success(request, 'Usuário Criado com sucesso!')
+
             return redirect('login')
+
     else:
         form = CreateUserForm()
         image_form=UploadImageForm()
@@ -102,15 +104,38 @@ def UserLogout(request):
 def Index(request):
     return render(request,'Candidaturas/base_site.html')
 
+#Registando as habilidades dos candidatos
+def RegisterCurriculum(id_candidato,habilidades,vaga_pontuacao):
+    _,created=Curriculums.objects.update_or_create(
+        id_candidato = id_candidato,
+        habilidades = habilidades,
+        vaga_pontuacao = vaga_pontuacao,      
+    )
+
 #Register Candidates View
 def RegisterCandidates(request):
+    file_d = ''
     if request.method == 'POST':
         form1=CandidatesForm(request.POST,request.FILES)
         #getting the file that will  be downloaded
         if form1.is_valid():
-           form1.save()
-           messages.success(request, 'Candidatura submetida com Sucesso!')
-           return redirect('register_candidates')
+            #salvando os dados do candidato
+            candidato = form1.save()
+            #pegamos o id do candidato cadastrado
+            id_candidato = candidato
+            #pegamos o caminho do curriculum
+            cv_path = candidato.curriculum.path
+            #aqui estamos a pegar os dados dos candidatos
+            curriculum = extract_text_from_pdf(cv_path)
+            #aqui vamos extrair as habilidades dos candidatos
+            habilidades = extract_skills(curriculum)
+            #extraindo a descrição da vaga
+            vaga_pontuacao = extract_vagas_pontuacao(curriculum)
+            #salvando as habilidades dos candidatos
+            RegisterCurriculum(id_candidato,habilidades,vaga_pontuacao)
+            #mensagem de sucesso
+            messages.success(request, 'Candidatura submetida com Sucesso!')
+            return redirect('register_candidates')
     else:
         form1 = CandidatesForm()
         file_d = DownloadFile.objects.all().first()
@@ -198,12 +223,23 @@ def VagasDelete(request,pk):
     }
     return render(request,'Candidaturas/vaga_delete.html',contexto)
 
-#Applying machine learning algorithm.
-def SearchView(request):
-    query = request.GET.get('q')
-    queryset = Candidates.objects.filter(Q(provincia__icontains=query))
-    contexto ={'result':queryset,'query':query}
-    return render(request,'Candidaturas/candidates_recommender.html',contexto)
+
+#classificação final 
+def Classificacao(lista_porcentagem):
+    for lp in lista_porcentagem:
+        if lp < 5:
+            classificacao1 ="Desclassificado"
+            lista_classificacao.append(classificacao1)
+        elif lp < 10 :
+            classificacao2 ="Moderado"
+            lista_classificacao.append(classificacao2)
+        elif lp == 10:
+            classificacao3 ="Classificado"
+            lista_classificacao.append(classificacao3)
+        else:
+            classificacao4 = "Classificado"
+            lista_classificacao.append(classificacao4)
+    return lista_classificacao
 
 #Candidates Classification
 def CandidateClassification(request):
@@ -211,23 +247,49 @@ def CandidateClassification(request):
     classificacao = FinalClassification()
     #get the candidates ids
     ids = ReturnCandidatesIds()
-    #get the classification list
-    class_list = Classificacao(classificacao)
     #list for queryset ids
     queryset_ids = []
+    #list of skills
+    list_skills = []
     #list for candidates classification
     lista_cl = []
     #interartion through candidates ids
     for id_c in ids:
         if id_c not in queryset_ids:
             queryset_ids.append(Candidates.objects.filter(id_candidato=id_c))
+            list_skills.append(Curriculums.objects.filter(id_candidato=id_c))
+    print("\n")
+    print(queryset_ids)
+    print("\n")
+    print(list_skills)
+    #list for habilidades
+    list_habilidades = []
+    #list for vaga pontuação
+    list_vaga_pontuacao = []
+    for hab in list_skills:
+        for h in hab:
+            habil = h.habilidades
+            list_habilidades.append(habil)
+            vaga_pontuacao = h.vaga_pontuacao
+            list_vaga_pontuacao.append(vaga_pontuacao)
+    #doing the total classification  
+    total_pontuacao = [x + y for x, y in zip(classificacao,list_vaga_pontuacao)]
+    #getting the the final classification
+    class_list = Classificacao(total_pontuacao)
     #interaction through candidates classification
-    for cl in classificacao:
+    for cl in total_pontuacao:
         lista_cl.append(cl)
-    #join the lists
-    mylista = zip(lista_cl, queryset_ids,class_list)
+    mylista = zip(lista_cl, queryset_ids,class_list,list_habilidades)
     contexto ={'queryset_ids':mylista}
     return render(request,'Candidaturas/candidate_classification.html',contexto)
+
+
+    #Applying machine learning algorithm.
+def SearchView(request):
+    query = request.GET.get('q')
+    queryset = Candidates.objects.filter(Q(provincia__icontains=query))
+    contexto ={'result':queryset,'query':query}
+    return render(request,'Candidaturas/candidates_recommender.html',contexto)
 
 
 

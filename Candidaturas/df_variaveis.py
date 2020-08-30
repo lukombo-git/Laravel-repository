@@ -13,8 +13,5 @@ def DF_Variaveis():
                             'instituicao','curso','ano_conclusao','media_final','area_candidatura','ano_experiencia_area',
                             'empresas_onde_trabalhou','cargo_na_empresa','disponibilidade','nivel_ingles','curriculum']
 
-    #guardando uma cópia do dataframe dos candidatos
-    df_candidatos_copy = df_candidatos.copy()
-
     return df_candidatos
 

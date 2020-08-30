@@ -45,7 +45,6 @@ class Vagas(models.Model):
     def __str__(self):
         return 'Vaga: {}'.format(self.id_vaga)
 
-
 #Creating the candidates model
 class Candidates(models.Model):
     NIVEL_INGLES =(
@@ -96,3 +95,21 @@ class Candidates(models.Model):
 
     def __str__(self):
         return 'Candidato: {}'.format(self.id_candidato)
+
+
+#Creating the areas model
+class Curriculums(models.Model):
+    id_curriculum = models.AutoField(primary_key=True)
+    id_candidato = models.ForeignKey(Candidates, on_delete=models.CASCADE)
+    habilidades = models.CharField(max_length=100)
+    vaga_pontuacao = models.IntegerField()
+
+    def publish(self):
+        self.data_cadastramento=timezone.now()
+        self.save()
+
+    def __str__(self):
+        return 'id_candidato: {}'.format(self.id_candidato)
+
+
+

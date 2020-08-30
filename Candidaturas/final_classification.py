@@ -146,25 +146,3 @@ def FinalClassification():
     lista_porcentagem4 = [x + y for x, y in zip(lista_porcentagem3, lista_provincias)]
   
     return lista_porcentagem4
-
-
-def Classificacao(lista_porcentagem):
-    for lp in lista_porcentagem:
-        if lp < 5:
-            classificacao1 ="Desclassificado"
-            lista_classificacao.append(classificacao1)
-        elif lp < 10 :
-            classificacao2 ="Moderado"
-            lista_classificacao.append(classificacao2)
-        else:
-            classificacao4 = "Classificado"
-            lista_classificacao.append(classificacao4)
-    return lista_classificacao
-
-
-
-
-
-
-
-
